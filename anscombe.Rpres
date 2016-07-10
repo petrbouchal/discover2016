@@ -60,7 +60,7 @@ mytheme <- theme_minimal() + theme(legend.position="none",
                                    text = element_text(size=16))
 ```
 
-Průměr proměnných X a Y
+Průměr
 ====
 
 ```{r Graf průměr}
@@ -76,7 +76,7 @@ an2 %>% ggplot(aes(x, y, fill=dataset)) + geom_boxplot() +
 
 Průměr proměnných X a Y je stejný ve všech čtyřech datasetech
 
-Směrodatná odchylka proměnných X a Y, pro každý dataset
+Směrodatná odchylka
 ====
 
 ```{r Graf odchylka}
@@ -86,7 +86,7 @@ an2sum %>% ggplot(aes(proměnná, odchylka, fill=dataset)) + geom_bar(stat = "id
 
 Ani odchylky se neliší.
 
-Součet proměnných X a Y, pro každý dataset
+Součet
 ====
 ```{r Graf soucet}
 an2sum %>% ggplot(aes(proměnná, součet, fill=dataset)) + geom_bar(stat = "identity") +
@@ -95,7 +95,7 @@ an2sum %>% ggplot(aes(proměnná, součet, fill=dataset)) + geom_bar(stat = "ide
 
 A ani součty.
 
-Čára nejlépe popisující body v každém datasetu
+Trend
 ====
 ```{r Graf regrese}
 an2 %>% ggplot(aes(x, y, colour=dataset)) +
