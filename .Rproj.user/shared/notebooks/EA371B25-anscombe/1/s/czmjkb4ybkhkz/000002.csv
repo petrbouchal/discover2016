@@ -1,0 +1,3 @@
+"0","an2 %>% ggplot(aes(x, y, colour=dataset)) +"
+"0","  geom_smooth(method='lm',formula=y~x, se = F, fullrange=TRUE) +"
+"0","  facet_wrap(~dataset) + mytheme"

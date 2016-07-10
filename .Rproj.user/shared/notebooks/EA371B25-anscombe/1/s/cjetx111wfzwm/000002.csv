@@ -1,0 +1,2 @@
+"0","mytheme <- theme_minimal() + theme(legend.position=""none"","
+"0","                                   text = element_text(size=16))"

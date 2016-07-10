@@ -1,0 +1,4 @@
+"0","library(dplyr)"
+"0","bygrp <- ec %>% group_by(group) %>% summarise(income=mean(income), crash=mean(crash))"
+"0","bycrash <- ec %>% group_by(crash) %>% summarise(income=mean(income))"
+"0","byboth <- ec %>% group_by(group, crash) %>% summarise(income=sum(income))"

@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "---\ntitle: \"Anscombův kvartet\"\noutput:\n  html_notebook:\n    code_folding: hide\n  html_document: default\n---\n```{r Setup, include=F}\nknitr::opts_chunk$set(echo = TRUE, warning=F)\n```\n\n```{r upravit data}\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(ggplot2)\nlibrary(knitr)\nlibrary(printr)\n\ndata(\"anscombe\")\n\nan2 <- anscombe %>% \n  gather(key = \"key\", value=\"value\") %>% \n  separate(key,into = c(\"var\",\"dataset\"),1) %>%\n  group_by(dataset, var) %>% \n  mutate(id = row_number()) %>% \n  spread(var, value) %>% \n  select(-id) %>% \n  ungroup() %>% \n  mutate(dataset = paste(\"Dataset\", dataset))\n\n```\n\n```{r, results='asis'}\nknitr::kable(anscombe)\n```\n\n```{r Spočítat souhrnné statistiky}\nan2sum <- an2 %>% group_by(dataset) %>%\n  gather(\"proměnná\",\"value\", -dataset) %>% mutate(proměnná = toupper(proměnná)) %>% \n  group_by(dataset, proměnná) %>%\n  summarise(průměr = mean(value), odchylka = sd(value), součet = sum(value)) \n```\n\n```{r Vyjet souhrny v tabulce, results=\"asis\"}\nkable(an2sum %>% arrange(proměnná), digits = 2)\n```\n\n```{r Nastavit styl}\nmytheme <- theme_minimal() + theme(legend.position=\"none\",\n                                   text = element_text(size=16))\n```\n\n# Průměr proměnných X a Y, pro každý dataset\n\n```{r Graf průměr}\n  \nan2sum %>% ggplot(aes(proměnná, průměr, fill=dataset)) + geom_bar(stat = \"identity\") +\n  facet_wrap(~dataset, scales=\"free_x\") + mytheme\n```\n\nPrůměr proměnných X a Y je stejný ve všech čtyřech datasetech.\n\n# Směrodatná odchylka proměnných X a Y, pro každý dataset\n\n```{r Graf odchylka}\nan2sum %>% ggplot(aes(proměnná, odchylka, fill=dataset)) + geom_bar(stat = \"identity\") +\n  facet_wrap(~dataset, scales=\"free_x\") + mytheme\n```\n\n# Součet proměnných X a Y, pro každý dataset\n\n```{r Graf soucet}\nan2sum %>% ggplot(aes(proměnná, součet, fill=dataset)) + geom_bar(stat = \"identity\") +\n  facet_wrap(~dataset, scales=\"free_x\") + mytheme\n```\n\n# Čára nejlépe popisující body v každém datasetu\n\n```{r Graf regrese}\nan2 %>% ggplot(aes(x, y, colour=dataset)) +\n  geom_smooth(method='lm',formula=y~x, se = F, fullrange=TRUE) +\n  facet_wrap(~dataset) + mytheme\n```\n\n# A takto vypadají syrová data...\n\n```{r Graf body}\nan2 %>% ggplot(aes(x, y, colour=dataset)) + geom_point() +\n  facet_wrap(~dataset) + mytheme\n```\n\n",
+    "created" : 1468183777800.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3838246125",
+    "id" : "57699AA3",
+    "lastKnownWriteTime" : 1468184425,
+    "last_content_update" : 1468184425466,
+    "path" : "~/github/discover2016/anscombe.Rmd",
+    "project_path" : "anscombe.Rmd",
+    "properties" : {
+        "chunk_output_type" : "inline",
+        "chunk_rendered_width" : "650",
+        "docOutlineVisible" : "0",
+        "source_window_id" : "",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

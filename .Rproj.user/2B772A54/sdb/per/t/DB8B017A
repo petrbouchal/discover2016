@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "---\ntitle: \"Ecological\"\noutput: html_document\n---\n\n```{r setup, include=FALSE}\nknitr::opts_chunk$set(echo = TRUE)\n```\n\n## Load data\n\n```{r load}\nlibrary(readxl)\nlibrary(dplyr)\nlibrary(tibble)\n\nec <- read_excel(\"./ecological.xlsx\", sheet = 1) %>% mutate(crash=as.logical(crash))\nhead(ec)\n\nec <- frame_data(\n  ~income, ~group, ~crash,\n  20000,\"A\",TRUE,\n  30000,\"A\",TRUE\n)\n\n```\n\n## Including Plots\n\nYou can also embed plots, for example:\n\n```{r summarise, echo=FALSE}\nlibrary(dplyr)\nbygrp <- ec %>% group_by(group) %>% summarise(income=mean(income), crash=mean(crash))\nbycrash <- ec %>% group_by(crash) %>% summarise(income=mean(income))\nbyboth <- ec %>% group_by(group, crash) %>% summarise(income=mean(income))\n```\n\n```{r plots}\nlibrary(ggplot2)\nbygrp %>% ggplot(aes(income,crash)) + geom_point() + geom_label(aes(label=group, colour=group))\nbycrash %>% ggplot(aes(crash, income)) + geom_bar(stat=\"identity\")\nec %>% ggplot(aes(group, income, group=group, colour=crash)) + geom_point()\nbyboth %>% ggplot(aes(group, income, fill=crash)) + geom_bar(stat=\"identity\", position=\"dodge\")\n\n```\n\n",
+    "created" : 1467924302592.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "918558403",
+    "id" : "DB8B017A",
+    "lastKnownWriteTime" : 1468183415,
+    "last_content_update" : 1468183415851,
+    "path" : "~/github/discover2016/ecological.Rmd",
+    "project_path" : "ecological.Rmd",
+    "properties" : {
+        "chunk_rendered_width" : "-22",
+        "last_setup_crc32" : "FEB97CC8bb338d19",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

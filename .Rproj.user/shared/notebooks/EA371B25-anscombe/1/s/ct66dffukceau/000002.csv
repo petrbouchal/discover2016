@@ -1,0 +1,2 @@
+"0","an2sum %>% ggplot(aes(proměnná, odchylka, fill=dataset)) + geom_bar(stat = ""identity"") +"
+"0","  facet_wrap(~dataset, scales=""free_x"") + mytheme"

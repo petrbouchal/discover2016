@@ -1,0 +1,4 @@
+"0","an2sum <- an2 %>% group_by(dataset) %>%"
+"0","  gather(""proměnná"",""value"", -dataset) %>% mutate(proměnná = toupper(proměnná)) %>% "
+"0","  group_by(dataset, proměnná) %>%"
+"0","  summarise(průměr = mean(value), odchylka = sd(value), součet = sum(value)) "
