@@ -1,0 +1,115 @@
+---
+title: "Anscombův kvartet"
+output:
+  ioslides_presentation:
+    font-family: "Helvetica"
+---
+
+```{r Setup, include=F}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(printr)
+knitr::opts_chunk$set(echo = FALSE, warning=F)
+data("anscombe")
+```
+
+```{r upravit data}
+an2 <- anscombe %>% 
+  gather(key = "key", value="value") %>% 
+  separate(key,into = c("var","dataset"),1) %>%
+  group_by(dataset, var) %>% 
+  mutate(id = row_number()) %>% 
+  spread(var, value) %>% 
+  select(-id) %>% 
+  ungroup() %>% 
+  mutate(dataset = paste("Dataset", dataset))
+```
+
+## Hrubá data: 4 datasety, v každém 11 pozorování s hodnotou X a Y
+
+```{r, results='asis'}
+knitr::kable(anscombe)
+```
+
+```{r Spočítat souhrnné statistiky}
+an2sum <- an2 %>% group_by(dataset) %>%
+  gather("proměnná","value", -dataset) %>% mutate(proměnná = toupper(proměnná)) %>% 
+  group_by(dataset, proměnná) %>%
+  summarise(průměr = mean(value), odchylka = sd(value), součet = sum(value)) 
+```
+
+## Souhrnné statistiky
+
+```{r Vyjet souhrny v tabulce, results="asis"}
+kable(an2sum %>% arrange(proměnná), digits = 2)
+```
+
+...mezi datasety se neliší.
+
+
+
+```{r Nastavit styl}
+mytheme <- theme_minimal() + theme(legend.position="none",
+                                   text = element_text(size=16))
+```
+
+## Průměr proměnných X a Y, pro každý dataset
+
+```{r Graf průměr}
+  
+an2sum %>% ggplot(aes(proměnná, průměr, fill=dataset)) + geom_bar(stat = "identity") +
+  facet_wrap(~dataset, scales="free_x") + mytheme
+```
+```{r Graf souhrn, include=F, echo=F}
+  
+an2 %>% ggplot(aes(x, y, fill=dataset)) + geom_boxplot() +
+  facet_wrap(~dataset, scales="free_x") + mytheme
+```
+
+Průměr proměnných X a Y je stejný ve všech čtyřech datasetech.
+
+
+
+## Směrodatná odchylka proměnných X a Y, pro každý dataset
+
+```{r Graf odchylka}
+an2sum %>% ggplot(aes(proměnná, odchylka, fill=dataset)) + geom_bar(stat = "identity") +
+  facet_wrap(~dataset, scales="free_x") + mytheme
+```
+
+Ani odchylky se neliší.
+
+
+
+## Součet proměnných X a Y, pro každý dataset
+
+```{r Graf soucet}
+an2sum %>% ggplot(aes(proměnná, součet, fill=dataset)) + geom_bar(stat = "identity") +
+  facet_wrap(~dataset, scales="free_x") + mytheme
+```
+
+A ani součty.
+
+
+
+## Čára nejlépe popisující body v každém datasetu
+
+```{r Graf regrese}
+an2 %>% ggplot(aes(x, y, colour=dataset)) +
+  geom_smooth(method='lm',formula=y~x, se = F, fullrange=TRUE) +
+  facet_wrap(~dataset) + mytheme
+```
+
+Dokonce i trend v datech je ve všech datasetech stejný.
+
+
+
+## A takto vypadají surová data...
+
+```{r Graf body}
+an2 %>% ggplot(aes(x, y, colour=dataset)) + geom_point() +
+  facet_wrap(~dataset) + mytheme
+```
+
