@@ -57,7 +57,7 @@ kable(an2sum %>% arrange(proměnná), digits = 2)
 
 ```{r Nastavit styl}
 mytheme <- theme_minimal() + theme(legend.position="none",
-                                   text = element_text(size=16))
+                                   text = element_text(size=30))
 ```
 
 Průměr
@@ -108,7 +108,7 @@ Dokonce i trend v datech je ve všech datasetech stejný.
 A takto vypadají surová data...
 ====
 ```{r Graf body}
-an2 %>% ggplot(aes(x, y, colour=dataset)) + geom_point() +
+an2 %>% ggplot(aes(x, y, colour=dataset)) + geom_point(size=10) +
   facet_wrap(~dataset) + mytheme
 ```
 
