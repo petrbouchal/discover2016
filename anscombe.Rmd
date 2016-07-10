@@ -1,23 +1,23 @@
 ---
 title: "Anscombův kvartet"
 output:
+  html_document: 
+    keep_md: yes
+    code_folding: hide
   html_notebook:
     code_folding: hide
-  html_document: default
 ---
 ```{r Setup, include=F}
-knitr::opts_chunk$set(echo = TRUE, warning=F)
-```
-
-```{r upravit data}
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(knitr)
 library(printr)
-
+knitr::opts_chunk$set(echo = TRUE, warning=F)
 data("anscombe")
+```
 
+```{r upravit data}
 an2 <- anscombe %>% 
   gather(key = "key", value="value") %>% 
   separate(key,into = c("var","dataset"),1) %>%
@@ -27,7 +27,6 @@ an2 <- anscombe %>%
   select(-id) %>% 
   ungroup() %>% 
   mutate(dataset = paste("Dataset", dataset))
-
 ```
 
 ```{r, results='asis'}
@@ -57,6 +56,11 @@ mytheme <- theme_minimal() + theme(legend.position="none",
 an2sum %>% ggplot(aes(proměnná, průměr, fill=dataset)) + geom_bar(stat = "identity") +
   facet_wrap(~dataset, scales="free_x") + mytheme
 ```
+```{r Graf souhrn, include=F, echo=F}
+  
+an2 %>% ggplot(aes(x, y, fill=dataset)) + geom_boxplot() +
+  facet_wrap(~dataset, scales="free_x") + mytheme
+```
 
 Průměr proměnných X a Y je stejný ve všech čtyřech datasetech.
 
@@ -82,7 +86,7 @@ an2 %>% ggplot(aes(x, y, colour=dataset)) +
   facet_wrap(~dataset) + mytheme
 ```
 
-# A takto vypadají syrová data...
+# A takto vypadají surová data...
 
 ```{r Graf body}
 an2 %>% ggplot(aes(x, y, colour=dataset)) + geom_point() +
