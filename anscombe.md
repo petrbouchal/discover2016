@@ -1,5 +1,8 @@
 # Anscombův kvartet
 
+Anscombův kvartet jsou čtyři datové sady s 11 pozorováními proměnné X a Y v každé sadě.
+
+
 
 
 ```r
@@ -13,6 +16,8 @@ an2 <- anscombe %>%
   ungroup() %>% 
   mutate(dataset = paste("Dataset", dataset))
 ```
+
+# Hrubá data: 4 datasety, v každém 11 pozorování s hodnotou X a Y
 
 
 ```r
@@ -43,6 +48,8 @@ an2sum <- an2 %>% group_by(dataset) %>%
   summarise(průměr = mean(value), odchylka = sd(value), součet = sum(value)) 
 ```
 
+# Souhrnné statistiky
+
 
 ```r
 kable(an2sum %>% arrange(proměnná), digits = 2)
@@ -60,6 +67,10 @@ Dataset 1   Y              7.5       2.03    82.51
 Dataset 2   Y              7.5       2.03    82.51
 Dataset 3   Y              7.5       2.03    82.50
 Dataset 4   Y              7.5       2.03    82.51
+
+...mezi datasety se neliší.
+
+----
 
 
 ```r
@@ -80,6 +91,8 @@ an2sum %>% ggplot(aes(proměnná, průměr, fill=dataset)) + geom_bar(stat = "id
 
 Průměr proměnných X a Y je stejný ve všech čtyřech datasetech.
 
+----
+
 # Směrodatná odchylka proměnných X a Y, pro každý dataset
 
 
@@ -89,6 +102,10 @@ an2sum %>% ggplot(aes(proměnná, odchylka, fill=dataset)) + geom_bar(stat = "id
 ```
 
 ![](anscombe_files/figure-html/Graf odchylka-1.png)<!-- -->
+
+Ani odchylky se neliší.
+
+----
 
 # Součet proměnných X a Y, pro každý dataset
 
@@ -100,6 +117,10 @@ an2sum %>% ggplot(aes(proměnná, součet, fill=dataset)) + geom_bar(stat = "ide
 
 ![](anscombe_files/figure-html/Graf soucet-1.png)<!-- -->
 
+A ani součty.
+
+----
+
 # Čára nejlépe popisující body v každém datasetu
 
 
@@ -110,6 +131,10 @@ an2 %>% ggplot(aes(x, y, colour=dataset)) +
 ```
 
 ![](anscombe_files/figure-html/Graf regrese-1.png)<!-- -->
+
+Dokonce i trend v datech je ve všech datasetech stejný.
+
+----
 
 # A takto vypadají surová data...
 
