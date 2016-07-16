@@ -1,11 +1,11 @@
 ---
 title: "Anscombův kvartet"
 output:
-  html_document: 
-    keep_md: yes
-    code_folding: hide
   html_notebook:
     code_folding: hide
+  html_document:
+    code_folding: hide
+    keep_md: yes
 ---
 
 Anscombův kvartet jsou čtyři datové sady s 11 pozorováními proměnné X a Y v každé sadě.
