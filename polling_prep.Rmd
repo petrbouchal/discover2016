@@ -11,18 +11,26 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
 library(dplyr)
 library(tibble)
 library(ggplot2)
+library(readr)
 
-set.seed(1)
+# set.seed(1)
 strany <- c("Strana jistot", "Strana prosperity", "Strana života")
-stranyprops <- c(.12,.26,.62)
+stranyprops <- c(.32,.21,.47)
 sum(stranyprops) == 1
 popsize <- 10e6
 poppref <- c(rep(strany[1],stranyprops[1]*popsize),
              rep(strany[2],stranyprops[2]*popsize),
              rep(strany[3],stranyprops[3]*popsize))
-souhrn <- data_frame(strana=poppref) %>% mutate(id=row_number()) %>% group_by(strana) %>% summarise(pocet=n()) %>% mutate(podil=pocet/sum(pocet))
+
+poppref <- data_frame("strana" = poppref)
+
+souhrn <- poppref %>% mutate(id=row_number()) %>% group_by(strana) %>%
+  summarise(pocet=n()) %>% mutate(podil=pocet/sum(pocet))
 
 souhrn %>% ggplot(aes(strana,podil)) + geom_bar(stat="identity")
+
+save(poppref, file = "poppref.RDa")
+write_csv(poppref, path = "poppref.csv")
 ```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.

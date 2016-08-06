@@ -1,25 +1,41 @@
----
-title: "Ecological"
-output:
-  html_document:
-    code_folding: hide
-    keep_md: yes
-  html_notebook:
-    code_folding: hide
-    keep_md: yes
----
+# Ecological
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 ## Load data
 
-```{r load}
+
+```r
 library(readxl)
 library(dplyr)
-library(tibble)
+```
 
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
+library(tibble)
+```
+
+```
+## Warning: package 'tibble' was built under R version 3.2.5
+```
+
+```r
 # ec <- read_excel("./ecological.xlsx", sheet = 1) %>% mutate(crash=as.logical(crash))
 # head(ec)
 
@@ -47,26 +63,43 @@ ec <- frame_data(
   34000,"C",FALSE,
   25000,"C",FALSE
 )
-
 ```
 
 ## Including Plots
 
 You can also embed plots, for example:
 
-```{r summarise, echo=FALSE}
-library(dplyr)
-bygrp <- ec %>% group_by(group) %>% summarise(income=mean(income), crash=mean(crash))
-bycrash <- ec %>% group_by(crash) %>% summarise(income=mean(income))
-byboth <- ec %>% group_by(group, crash) %>% summarise(income=mean(income))
-```
 
-```{r plots}
+
+
+```r
 library(ggplot2)
 bygrp %>% ggplot(aes(income,crash)) + geom_point() + geom_label(aes(label=group, colour=group))
+```
+
+![](ecological_files/figure-html/plots-1.png)<!-- -->
+
+```r
 bycrash %>% ggplot(aes(crash, income)) + geom_bar(stat="identity")
+```
+
+![](ecological_files/figure-html/plots-2.png)<!-- -->
+
+```r
 ec %>% ggplot(aes(group, income, group=group, colour=crash)) + geom_point()
+```
+
+![](ecological_files/figure-html/plots-3.png)<!-- -->
+
+```r
 byboth %>% ggplot(aes(group, income, fill=crash)) + geom_bar(stat="identity", position="dodge")
+```
+
+![](ecological_files/figure-html/plots-4.png)<!-- -->
+
+```r
 bygrp %>% ggplot(aes(group, crash, fill=crash)) + geom_bar(stat="identity", position="dodge")
 ```
+
+![](ecological_files/figure-html/plots-5.png)<!-- -->
 

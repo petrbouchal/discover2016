@@ -2,48 +2,200 @@
 title: "Polling"
 runtime: shiny
 output: ioslides_presentation
+widescreen: yes
 ---
 
 ```{r setup, include=FALSE}
+library(shiny)
+library(grid)
+library(scales)
+library(ggplot2)
+library(shinydashboard)
+library(RColorBrewer)
+library(data.table)
+library(dplyr)
 knitr::opts_chunk$set(echo = FALSE)
+
+# load("poppref.RDa")
+# poppref <- read_csv("poppref.csv")
+poppref <- fread("poppref.csv", sep = ",")
+poppref <- poppref %>%
+  mutate(rownum = sample(1:1e8, length(poppref$strana), replace = F)) %>%
+  arrange(rownum)
 ```
 
-## Shiny Presentation
+## Postupný sběr dat
 
-This R Markdown presentation is made interactive using Shiny. The viewers of the presentation can change the assumptions underlying what's presented and see the results immediately. 
-
-To learn more, see [Interactive Documents](http://rmarkdown.rstudio.com/authoring_shiny.html).
-
-## Interactive Plot
-
-```{r eruptions}
-inputPanel(
-  selectInput("n_breaks", label = "Number of bins:",
-              choices = c(10, 20, 35, 50), selected = 20),
-  
-  sliderInput("bw_adjust", label = "Bandwidth adjustment:",
-              min = 0.2, max = 2, value = 1, step = 0.2)
+```{r}
+vyber <- reactive(
+  {pocetradek = as.numeric(input$pricist1 + input$pricist10*10 + 
+                             input$pricist20*20 + input$pricist100*100)
+  poppref[0:pocetradek,]
+  }
 )
 
+inputPanel(
+  actionButton("pricist1", label = "Ještě 1"),
+  actionButton("pricist10", label = "Ještě 10"),
+  actionButton("pricist20", label = "Ještě 20"),
+  actionButton("pricist100", label = "Ještě 100")
+  # actionButton(paste("Znova vybrat", nrow(vyber())))
+)
+
+souhrn_pop <- poppref %>% mutate(id=row_number()) %>% group_by(strana) %>%
+  summarise(pocet=n()) %>% mutate(podil=pocet/sum(pocet))
+
+themebar <- theme_minimal() + theme(axis.text.y=element_blank(), axis.title.y=element_blank(),
+                  panel.border=element_blank(), panel.grid.major=element_blank(),
+                  text=element_text(size=24), axis.ticks=element_blank(),
+                  axis.title.x=element_blank())
+partypal <- brewer.pal(3, "Set1")
+
+renderPlot({souhrn_pop %>% ggplot(aes(x=1, y=podil, fill=strana)) +
+    geom_bar(stat="identity", position="fill") + coord_flip() +
+    scale_fill_manual(values=c("Strana jistot"="red",
+                               "Strana prosperity"="blue",
+                               "Strana života"="green")) +
+    themebar +
+    guides(fill=guide_legend(title = "")) +
+    scale_y_continuous(labels=percent) +
+    theme(legend.position="bottom") +
+    ggtitle("Skutečné preference")},width=1000, height=150)
+ 
+# renderText({nrow(vyber())})
+# renderText({input$pricist1})
+# renderText({input$pricist10})
+# renderText({input$pricist20})
+# renderText({input$pricist100})
+
 renderPlot({
-  hist(faithful$eruptions, probability = TRUE, breaks = as.numeric(input$n_breaks),
-       xlab = "Duration (minutes)", main = "Geyser eruption duration")
-  
-  dens <- density(faithful$eruptions, adjust = input$bw_adjust)
-  lines(dens, col = "blue")
-})
+  ggplot(vyber() %>% group_by(strana) %>%
+           summarise(hlasy=n()),
+         aes(x=1, y=hlasy, fill=strana)) +
+    geom_bar(stat="identity", position="fill") +
+    scale_fill_manual(values=c("Strana jistot"="red",
+                               "Strana prosperity"="blue",
+                               "Strana života"="green")) +
+    scale_y_continuous(labels=percent) +
+    ggtitle(paste("Vzorek celkem", nrow(vyber()))) + coord_flip() + themebar +
+    theme(legend.position="none")}, height=140, width=1000)
+
+srovnani <- reactive({souhrn_pop %>% left_join(vyber() %>%
+                           group_by(strana) %>%
+                           summarise(hlasy=n()) %>% 
+                           mutate(podil_vyber = hlasy/sum(hlasy))) %>%
+  mutate(podil_vyber = ifelse(is.na(podil_vyber),0,podil_vyber)) %>% 
+  mutate(rozdil = podil_vyber - podil, meanrozdil = mean(abs(rozdil)))})
 ```
 
-## Bullets
-
-- Bullet 1
-- Bullet 2
-- Bullet 3
-
-## R Output
-
-```{r cars}
-summary(cars)
+```{r eval=T}
+renderPlot({srovnani() %>%
+  ggplot(aes(strana, rozdil, fill=strana)) +
+    geom_bar(stat="identity") + themebar + coord_flip() +
+    geom_hline(yintercept=0) +
+    geom_text(aes(label=paste(formatC(rozdil*100,digits = 2, width=0),"%"),
+              y=rozdil+(ifelse(rozdil>0, .05, -0.05))), size=6) +
+    scale_y_continuous(limits=c(-0.5, 0.5), labels=percent) +
+    theme(legend.position="none", axis.text.y=element_text()) +
+    scale_fill_manual(values=c("Strana jistot"="red",
+                               "Strana prosperity"="blue",
+                               "Strana života"="green"))},
+  width=600, height=200)
 ```
 
+```{r results="asis"}
+renderTable(srovnani())
+```
 
+## Několik průzkumů 100 respondentech
+
+```{r}
+
+osmkratsto <- bind_rows(data_frame("strana"=sample(poppref$strana, 100, replace=F),
+                                   "pruzkum" = "Pruzkum 1"),
+                        data_frame("strana"=sample(poppref$strana, 100, replace=F),
+                                   "pruzkum" = "Pruzkum 2"),
+                        data_frame("strana"=sample(poppref$strana, 100, replace=F),
+                                   "pruzkum" = "Pruzkum 3"),
+                        data_frame("strana"=sample(poppref$strana, 100, replace=F),
+                                   "pruzkum" = "Pruzkum 4"),
+                        data_frame("strana"=sample(poppref$strana, 100, replace=F),
+                                   "pruzkum" = "Pruzkum 5"),
+                        data_frame("strana"=sample(poppref$strana, 100, replace=F),
+                                   "pruzkum" = "Pruzkum 6"),
+                        data_frame("strana"=sample(poppref$strana, 100, replace=F),
+                                   "pruzkum" = "Pruzkum 7"),
+                        data_frame("strana"=sample(poppref$strana, 100, replace=F),
+                                   "pruzkum" = "Pruzkum 8")
+                        )
+
+renderPlot({souhrn_pop %>% ggplot(aes(x=1, y=podil, fill=strana)) +
+    geom_bar(stat="identity", position="fill") + coord_flip() +
+    scale_fill_manual(values=c("Strana jistot"="red",
+                               "Strana prosperity"="blue",
+                               "Strana života"="green")) +
+    themebar +
+    guides(fill=guide_legend(title = "")) +
+    scale_y_continuous(labels=percent) +
+    theme(legend.position="bottom") +
+    ggtitle("Skutečné preference")},width=1000, height=150)
+
+renderPlot({ggplot(osmkratsto %>% group_by(pruzkum, strana) %>%
+         summarise(pocet = n()) %>% 
+         ungroup() %>% group_by(pruzkum) %>% mutate(podil=pocet/sum(pocet)),
+       aes(fill=strana, x=pruzkum, y=podil)) +
+    geom_bar(stat="identity", position="fill") +
+    scale_fill_manual(values=c("Strana jistot"="red",
+                               "Strana prosperity"="blue",
+                               "Strana života"="green")) +
+    scale_y_continuous(labels=percent) +
+    # ggtitle("Osm průzkumů o 100 respondentech") +
+    coord_flip() + themebar +
+    theme(legend.position="none", axis.text.y=element_text())},width=1000, height=450)
+
+```
+
+## Několik průzkumů 1000 respondentech
+
+```{r}
+osmkrattisic <- bind_rows(data_frame("strana"=sample(poppref$strana, 1000, replace=F),
+                                   "pruzkum" = "Pruzkum 1"),
+                        data_frame("strana"=sample(poppref$strana, 1000, replace=F),
+                                   "pruzkum" = "Pruzkum 2"),
+                        data_frame("strana"=sample(poppref$strana, 1000, replace=F),
+                                   "pruzkum" = "Pruzkum 3"),
+                        data_frame("strana"=sample(poppref$strana, 1000, replace=F),
+                                   "pruzkum" = "Pruzkum 4"),
+                        data_frame("strana"=sample(poppref$strana, 1000, replace=F),
+                                   "pruzkum" = "Pruzkum 5"),
+                        data_frame("strana"=sample(poppref$strana, 1000, replace=F),
+                                   "pruzkum" = "Pruzkum 6"),
+                        data_frame("strana"=sample(poppref$strana, 1000, replace=F),
+                                   "pruzkum" = "Pruzkum 7"),
+                        data_frame("strana"=sample(poppref$strana, 1000, replace=F),
+                                   "pruzkum" = "Pruzkum 8")
+                        )
+
+renderPlot({souhrn_pop %>% ggplot(aes(x=1, y=podil, fill=strana)) +
+    geom_bar(stat="identity", position="fill") + coord_flip() +
+    scale_fill_manual(values=c("Strana jistot"="red",
+                               "Strana prosperity"="blue",
+                               "Strana života"="green")) +
+    themebar +
+    guides(fill=guide_legend(title = "")) +
+    scale_y_continuous(labels=percent) +
+    theme(legend.position="bottom") +
+    ggtitle("Skutečné preference")},width=1000, height=150)
+
+renderPlot({ggplot(osmkrattisic %>% group_by(pruzkum, strana) %>%
+         summarise(pocet = n()) %>% 
+         ungroup() %>% group_by(pruzkum) %>% mutate(podil=pocet/sum(pocet)),
+       aes(fill=strana, x=pruzkum, y=podil)) +
+    geom_bar(stat="identity", position="fill") +
+    scale_fill_manual(values=c("Strana jistot"="red",
+                               "Strana prosperity"="blue",
+                               "Strana života"="green")) +
+    scale_y_continuous(labels=percent) +
+    # ggtitle("Osm průzkumů o 100 respondentech") +
+    coord_flip() + themebar +
+    theme(legend.position="none", axis.text.y=element_text())}, width=1000, height=450)

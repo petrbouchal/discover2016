@@ -3,6 +3,7 @@ title: "Anscombův kvartet"
 output:
   html_notebook:
     code_folding: hide
+    keep_md: yes
   html_document:
     code_folding: hide
     keep_md: yes
