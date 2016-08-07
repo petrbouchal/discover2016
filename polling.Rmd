@@ -13,7 +13,7 @@ library(ggplot2)
 library(RColorBrewer)
 library(data.table)
 library(dplyr)
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message=F, error=F, warning=F)
 
 # load("poppref.RDa")
 # poppref <- read_csv("poppref.csv")
@@ -58,6 +58,9 @@ partypal <- brewer.pal(4, "Set1")
 
 renderPlot({souhrn_pop %>% ggplot(aes(x=1, y=podil, fill=strana)) +
     geom_bar(stat="identity", position="fill") + coord_flip() +
+    geom_text(aes(label=paste(formatC(podil*100,digits = 2, width=0),"% "), y=podil, ymax=1),
+              position="fill", hjust=1, size=8, colour="white", fontface="bold",
+              show.legend = F) +
     scale_fill_manual(values=c("Strana jistot"="red",
                                "Strana prosperity"="blue",
                                "Strana života"="green")) +
@@ -75,9 +78,13 @@ renderPlot({souhrn_pop %>% ggplot(aes(x=1, y=podil, fill=strana)) +
 
 renderPlot({
   ggplot(vyber() %>% group_by(strana) %>%
-           summarise(hlasy=n()),
-         aes(x=1, y=hlasy, fill=strana)) +
+           summarise(hlasy=n()) %>% ungroup() %>% mutate(podil=hlasy/sum(hlasy)),
+         aes(x=1, y=podil, fill=strana)) +
     geom_bar(stat="identity", position="fill") +
+    geom_text(aes(label=paste(formatC(podil*100,digits = 2, width=0),"%"),
+                           y=podil, ymax=1, x=1),
+              position="fill",hjust=1, size=8, colour="white", fontface="bold",
+              show.legend = F, inherit.aes = F) +
     scale_fill_manual(values=c("Strana jistot"="red",
                                "Strana prosperity"="blue",
                                "Strana života"="green")) +
@@ -93,10 +100,10 @@ srovnani <- reactive({
   mutate(podil_vyber = ifelse(is.na(podil_vyber),0,podil_vyber)) %>% 
   mutate(rozdil = podil_vyber - podil)
   
-   partycomp %>% bind_rows(partycomp %>%
-              ungroup() %>%
-              summarise(rozdil=mean(abs(rozdil))) %>% 
-              mutate(strana="Průměrná absolutní chyba"))})
+  partycomp %>% bind_rows(partycomp %>%
+                            ungroup() %>%
+                            summarise(rozdil=mean(abs(rozdil))) %>% 
+                            mutate(strana="Průměrná absolutní chyba"))})
   
 ```
 
@@ -145,6 +152,9 @@ osmkratsto <- bind_rows(data_frame("strana"=sample(poppref$strana, 100, replace=
 renderPlot({souhrn_pop %>%
     ggplot(aes(x="         ", y=podil, fill=strana)) +
     geom_bar(stat="identity", position="fill") + coord_flip() +
+    geom_text(aes(label=paste(formatC(podil*100,digits = 2, width=0),"% "), y=podil, ymax=1),
+              position="fill", hjust=1, size=8, colour="white", fontface="bold",
+              show.legend = F) +
     scale_fill_manual(values=c("Strana jistot"="red",
                                "Strana prosperity"="blue",
                                "Strana života"="green")) +
@@ -155,11 +165,17 @@ renderPlot({souhrn_pop %>%
            axis.text.x=element_text()) +
     ggtitle("Skutečné preference")},width=1000, height=150)
 
-renderPlot({ggplot(osmkratsto %>% group_by(pruzkum, strana) %>%
-         summarise(pocet = n()) %>% 
-         ungroup() %>% group_by(pruzkum) %>% mutate(podil=pocet/sum(pocet)),
-       aes(fill=strana, x=pruzkum, y=podil)) +
+osmkratsto_sum <- osmkratsto %>%
+  group_by(pruzkum, strana) %>%
+  summarise(pocet = n()) %>% 
+  ungroup() %>% group_by(pruzkum) %>%
+  mutate(podil=pocet/sum(pocet))
+
+renderPlot({ggplot(osmkratsto_sum, aes(fill=strana, x=pruzkum, y=podil)) +
     geom_bar(stat="identity", position="fill") +
+    geom_text(aes(label=paste(formatC(podil*100,digits = 2, width=0),"% "), y=podil, ymax=1),
+              position="fill", hjust=1, size=8, colour="white", fontface="bold",
+              show.legend = F) +
     scale_fill_manual(values=c("Strana jistot"="red",
                                "Strana prosperity"="blue",
                                "Strana života"="green")) +
@@ -169,7 +185,23 @@ renderPlot({ggplot(osmkratsto %>% group_by(pruzkum, strana) %>%
     theme(legend.position="none", axis.text.y=element_text(family="Courier"),
           axis.text.x=element_text())},width=1000, height=250)
 
+osmkratsto_comp <- osmkratsto_sum %>%
+  group_by(strana) %>%
+  left_join(souhrn_pop %>% group_by(strana) %>% select(podil_pop=podil), by = c("strana")) %>% 
+  mutate(rozdil = abs(podil - podil_pop)) %>% 
+  summarise(meanrozdil = mean(rozdil))
+
+osmkratsto_comp <- osmkratsto_comp %>% bind_rows(osmkratsto_comp %>%
+                               ungroup() %>%
+                               summarise(meanrozdil=mean(meanrozdil)) %>% 
+                               mutate(strana="Průměrná absolutní chyba"))
 ```
+
+```{r results="asis", include=F, eval=F}
+renderTable(osmkratsto_comp)
+```
+
+Průměrná absolutní chyba: `r paste(formatC(osmkratsto_comp$meanrozdil[[4]]*100,digits = 2, width=0),"% ")`
 
 ## Několik průzkumů o 1000 respondentech
 
@@ -194,6 +226,9 @@ osmkrattisic <- bind_rows(data_frame("strana"=sample(poppref$strana, 1000, repla
 
 renderPlot({souhrn_pop %>% ggplot(aes(x="         ", y=podil, fill=strana)) +
     geom_bar(stat="identity", position="fill") + coord_flip() +
+    geom_text(aes(label=paste(formatC(podil*100,digits = 2, width=0),"% "), y=podil, ymax=1),
+              position="fill", hjust=1, size=8, colour="white", fontface="bold",
+              show.legend = F) +
     scale_fill_manual(values=c("Strana jistot"="red",
                                "Strana prosperity"="blue",
                                "Strana života"="green")) +
@@ -204,11 +239,15 @@ renderPlot({souhrn_pop %>% ggplot(aes(x="         ", y=podil, fill=strana)) +
            axis.text.x=element_text()) +
     ggtitle("Skutečné preference")},width=1000, height=150)
 
-renderPlot({ggplot(osmkrattisic %>% group_by(pruzkum, strana) %>%
+osmkrattisic_sum <- osmkrattisic %>% group_by(pruzkum, strana) %>%
          summarise(pocet = n()) %>% 
-         ungroup() %>% group_by(pruzkum) %>% mutate(podil=pocet/sum(pocet)),
-       aes(fill=strana, x=pruzkum, y=podil)) +
+         ungroup() %>% group_by(pruzkum) %>% mutate(podil=pocet/sum(pocet))
+
+renderPlot({ggplot(osmkrattisic_sum, aes(fill=strana, x=pruzkum, y=podil)) +
     geom_bar(stat="identity", position="fill") +
+    geom_text(aes(label=paste(formatC(podil*100,digits = 2, width=0),"% "), y=podil, ymax=1),
+              position="fill", hjust=1, size=8, colour="white", fontface="bold",
+              show.legend = F) +  
     scale_fill_manual(values=c("Strana jistot"="red",
                                "Strana prosperity"="blue",
                                "Strana života"="green")) +
@@ -217,3 +256,21 @@ renderPlot({ggplot(osmkrattisic %>% group_by(pruzkum, strana) %>%
     coord_flip() + themebar +
     theme(legend.position="none", axis.text.y=element_text(family="Courier"),
           axis.text.x=element_text())}, width=1000, height=250)
+
+osmkrattisic_comp <- osmkrattisic_sum %>%
+  group_by(strana) %>%
+  left_join(souhrn_pop %>% group_by(strana) %>% select(podil_pop=podil), by = c("strana")) %>% 
+  mutate(rozdil = abs(podil - podil_pop)) %>% 
+  summarise(meanrozdil = mean(rozdil))
+
+osmkrattisic_comp <- osmkrattisic_comp %>% bind_rows(osmkrattisic_comp %>%
+                               ungroup() %>%
+                               summarise(meanrozdil=mean(meanrozdil)) %>% 
+                               mutate(strana="Průměrná absolutní chyba"))
+```
+
+```{r results="asis", include=F, eval=F}
+renderTable(osmkrattisic_comp)
+```
+
+Průměrná absolutní chyba: `r paste(formatC(osmkrattisic_comp$meanrozdil[[4]]*100,digits = 2, width=0),"% ")`
