@@ -167,7 +167,7 @@ renderPlot({ggplot(osmkratsto %>% group_by(pruzkum, strana) %>%
     # ggtitle("Osm průzkumů o 100 respondentech") +
     coord_flip() + themebar +
     theme(legend.position="none", axis.text.y=element_text(family="Courier"),
-          axis.text.x=element_text())},width=1000, height=350)
+          axis.text.x=element_text())},width=1000, height=250)
 
 ```
 
@@ -216,4 +216,4 @@ renderPlot({ggplot(osmkrattisic %>% group_by(pruzkum, strana) %>%
     # ggtitle("Osm průzkumů o 100 respondentech") +
     coord_flip() + themebar +
     theme(legend.position="none", axis.text.y=element_text(family="Courier"),
-          axis.text.x=element_text())}, width=1000, height=350)
+          axis.text.x=element_text())}, width=1000, height=250)
