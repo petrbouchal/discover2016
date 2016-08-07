@@ -25,7 +25,7 @@ poppref <- poppref %>%
 
 ## Postupný sběr dat
 
-```{r}
+```{r error=F, include=T}
 vyber <- reactive(
   {pocetradek = as.numeric(input$pricist1 + input$pricist10*10 + 
                              input$pricist20*20 + input$pricist100*100)
@@ -43,12 +43,18 @@ inputPanel(
 
 souhrn_pop <- poppref %>% mutate(id=row_number()) %>% group_by(strana) %>%
   summarise(pocet=n()) %>% mutate(podil=pocet/sum(pocet))
+```
 
-themebar <- theme_minimal() + theme(axis.text.y=element_blank(), axis.title.y=element_blank(),
-                  panel.border=element_blank(), panel.grid.major=element_blank(),
-                  text=element_text(size=24), axis.ticks=element_blank(),
-                  axis.title.x=element_blank())
-partypal <- brewer.pal(3, "Set1")
+```{r include=T, error=F}
+themebar <- theme_minimal() +
+  theme(text=element_text(size=24),
+        axis.text.y=element_blank(),
+        axis.title.y=element_blank(),
+        panel.border=element_blank(),
+        panel.grid.major=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank())
+partypal <- brewer.pal(4, "Set1")
 
 renderPlot({souhrn_pop %>% ggplot(aes(x=1, y=podil, fill=strana)) +
     geom_bar(stat="identity", position="fill") + coord_flip() +
@@ -77,14 +83,21 @@ renderPlot({
                                "Strana života"="green")) +
     scale_y_continuous(labels=percent) +
     ggtitle(paste("Vzorek celkem", nrow(vyber()))) + coord_flip() + themebar +
-    theme(legend.position="none")}, height=140, width=1000)
+    theme(legend.position="none")}, height=110, width=1000)
 
-srovnani <- reactive({souhrn_pop %>% left_join(vyber() %>%
-                           group_by(strana) %>%
-                           summarise(hlasy=n()) %>% 
-                           mutate(podil_vyber = hlasy/sum(hlasy))) %>%
+srovnani <- reactive({
+  partycomp <- souhrn_pop %>% left_join(vyber() %>%
+                                          group_by(strana) %>%
+                                          summarise(hlasy=n()) %>%
+                                          mutate(podil_vyber = hlasy/sum(hlasy))) %>%
   mutate(podil_vyber = ifelse(is.na(podil_vyber),0,podil_vyber)) %>% 
-  mutate(rozdil = podil_vyber - podil, meanrozdil = mean(abs(rozdil)))})
+  mutate(rozdil = podil_vyber - podil)
+  
+   partycomp %>% bind_rows(partycomp %>%
+              ungroup() %>%
+              summarise(rozdil=mean(abs(rozdil))) %>% 
+              mutate(strana="Průměrná absolutní chyba"))})
+  
 ```
 
 ```{r eval=T}
@@ -94,19 +107,20 @@ renderPlot({srovnani() %>%
     geom_hline(yintercept=0) +
     geom_text(aes(label=paste(formatC(rozdil*100,digits = 2, width=0),"%"),
               y=rozdil+(ifelse(rozdil>0, .05, -0.05))), size=6) +
-    scale_y_continuous(limits=c(-0.5, 0.5), labels=percent) +
-    theme(legend.position="none", axis.text.y=element_text()) +
+    scale_y_continuous(limits=c(-0.75, 0.75), labels=percent) +
+    theme(legend.position="none", axis.text.y=element_text(hjust=1)) +
     scale_fill_manual(values=c("Strana jistot"="red",
                                "Strana prosperity"="blue",
-                               "Strana života"="green"))},
-  width=600, height=200)
+                               "Strana života"="green",
+                               "Průměrná absolutní chyba"="grey"))},
+  width=600, height=150)
 ```
 
-```{r results="asis"}
+```{r results="asis", include=F, eval=F}
 renderTable(srovnani())
 ```
 
-## Několik průzkumů 100 respondentech
+## Několik průzkumů o 100 respondentech
 
 ```{r}
 
@@ -128,7 +142,8 @@ osmkratsto <- bind_rows(data_frame("strana"=sample(poppref$strana, 100, replace=
                                    "pruzkum" = "Pruzkum 8")
                         )
 
-renderPlot({souhrn_pop %>% ggplot(aes(x=1, y=podil, fill=strana)) +
+renderPlot({souhrn_pop %>%
+    ggplot(aes(x="         ", y=podil, fill=strana)) +
     geom_bar(stat="identity", position="fill") + coord_flip() +
     scale_fill_manual(values=c("Strana jistot"="red",
                                "Strana prosperity"="blue",
@@ -136,7 +151,8 @@ renderPlot({souhrn_pop %>% ggplot(aes(x=1, y=podil, fill=strana)) +
     themebar +
     guides(fill=guide_legend(title = "")) +
     scale_y_continuous(labels=percent) +
-    theme(legend.position="bottom") +
+    theme(legend.position="bottom", axis.text.y=element_text(family="Courier"),
+           axis.text.x=element_text()) +
     ggtitle("Skutečné preference")},width=1000, height=150)
 
 renderPlot({ggplot(osmkratsto %>% group_by(pruzkum, strana) %>%
@@ -150,11 +166,12 @@ renderPlot({ggplot(osmkratsto %>% group_by(pruzkum, strana) %>%
     scale_y_continuous(labels=percent) +
     # ggtitle("Osm průzkumů o 100 respondentech") +
     coord_flip() + themebar +
-    theme(legend.position="none", axis.text.y=element_text())},width=1000, height=450)
+    theme(legend.position="none", axis.text.y=element_text(family="Courier"),
+          axis.text.x=element_text())},width=1000, height=350)
 
 ```
 
-## Několik průzkumů 1000 respondentech
+## Několik průzkumů o 1000 respondentech
 
 ```{r}
 osmkrattisic <- bind_rows(data_frame("strana"=sample(poppref$strana, 1000, replace=F),
@@ -175,7 +192,7 @@ osmkrattisic <- bind_rows(data_frame("strana"=sample(poppref$strana, 1000, repla
                                    "pruzkum" = "Pruzkum 8")
                         )
 
-renderPlot({souhrn_pop %>% ggplot(aes(x=1, y=podil, fill=strana)) +
+renderPlot({souhrn_pop %>% ggplot(aes(x="         ", y=podil, fill=strana)) +
     geom_bar(stat="identity", position="fill") + coord_flip() +
     scale_fill_manual(values=c("Strana jistot"="red",
                                "Strana prosperity"="blue",
@@ -183,7 +200,8 @@ renderPlot({souhrn_pop %>% ggplot(aes(x=1, y=podil, fill=strana)) +
     themebar +
     guides(fill=guide_legend(title = "")) +
     scale_y_continuous(labels=percent) +
-    theme(legend.position="bottom") +
+    theme(legend.position="bottom", axis.text.y=element_text(family="Courier"),
+           axis.text.x=element_text()) +
     ggtitle("Skutečné preference")},width=1000, height=150)
 
 renderPlot({ggplot(osmkrattisic %>% group_by(pruzkum, strana) %>%
@@ -197,4 +215,5 @@ renderPlot({ggplot(osmkrattisic %>% group_by(pruzkum, strana) %>%
     scale_y_continuous(labels=percent) +
     # ggtitle("Osm průzkumů o 100 respondentech") +
     coord_flip() + themebar +
-    theme(legend.position="none", axis.text.y=element_text())}, width=1000, height=450)
+    theme(legend.position="none", axis.text.y=element_text(family="Courier"),
+          axis.text.x=element_text())}, width=1000, height=350)
